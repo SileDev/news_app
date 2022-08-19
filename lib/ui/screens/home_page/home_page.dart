@@ -163,7 +163,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             label: "Sports",
           ),
           BottomNavigationBarItem(
-            backgroundColor: Colors.transparent,
             icon: Icon(Icons.computer_rounded),
             label: "Technology",
           ),
