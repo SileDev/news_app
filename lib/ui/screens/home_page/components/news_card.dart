@@ -83,13 +83,13 @@ class NewsCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Row(
-              children: [
+              children: const [
                 Expanded(
                   child: IconButton(
-                    onPressed: () => null,
+                    onPressed: null,
                     splashRadius: 20,
-                    tooltip: "Valorar",
-                    icon: const Icon(
+                    tooltip: "Rate Up",
+                    icon: Icon(
                       Icons.thumb_up_off_alt_outlined,
                       color: Color(0xffff6060),
                     ),
@@ -97,10 +97,10 @@ class NewsCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: IconButton(
-                    onPressed: () => null,
-                    tooltip: "Comentarios",
+                    onPressed: null,
+                    tooltip: "Comments",
                     splashRadius: 20,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.insert_comment_outlined,
                       color: Color(0xff6060b0),
                     ),

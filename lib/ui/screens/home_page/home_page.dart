@@ -1,6 +1,5 @@
-import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 import 'package:flutter/material.dart';
 import 'package:news_app/ui/screens/home_page/components/news_card.dart';
 
@@ -23,248 +22,69 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     "technology",
   ];
 
-  void _setCurrentCategory(int index) {
+  bool pendingLoad = true;
+
+  void _setCurrentCategory(int newIndex) {
     setState(() {
-      categoryIndex = index;
+      pendingLoad = true;
+
+      try {
+        scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 0),
+          curve: Curves.easeOut,
+        );
+        // ignore: empty_catches
+      } catch (e) {}
+
+      categoryIndex = newIndex;
     });
   }
 
-  Future<Map<dynamic, dynamic>> _getPosts(String currentCategory) async {
-    final httpResponse = await http.get(
-      Uri.parse(
-          "https://newsapi.org/v2/top-headlines?country=us&category=$currentCategory&apiKey=5185057d777d40a4bce3280e8a4671ce"),
-    );
-    return jsonDecode(utf8.decode(httpResponse.bodyBytes));
-    /*try {
-        final httpResponse = await http.get(
-          Uri.parse(
-              "https://newsapi.org/v2/top-headlines?country=us&apiKey=5185057d777d40a4bce3280e8a4671ce"),
-        );
-
-        if (httpResponse.statusCode == 200) {
-          var body = jsonDecode(utf8.decode(httpResponse.bodyBytes));
-          return body['articles'];
-        } else {
-          //To catch the null assertion
-          return null;
-        }
-      } catch (e) {
-        //To catch the error message and use it in FutureBuilder
-        return e;
-      }
-      */
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 7,
-      child: Scaffold(
-        backgroundColor: const Color(0xfff7f7f7),
-        appBar: AppBar(
-          title: const Text(
-            "News App",
-          ),
-          backgroundColor: const Color(0xffffffff),
-          foregroundColor: const Color(0xff303030),
-          bottom: TabBar(
-            indicatorColor: const Color(0xffa7a7a7),
-            labelPadding: const EdgeInsets.all(4),
-            isScrollable: true,
-            labelColor: const Color(0xff505050),
-            labelStyle: Theme.of(context).textTheme.labelSmall,
-            tabs: [
-              InkWell(
-                onTap: () => _setCurrentCategory(0),
-                child: Column(
-                  children: const [
-                    Icon(Icons.newspaper_rounded),
-                    Text("General"),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: () => _setCurrentCategory(1),
-                child: Column(
-                  children: const [
-                    Icon(Icons.business_center_rounded),
-                    Text("Business"),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: () => _setCurrentCategory(2),
-                child: Column(
-                  children: const [
-                    Icon(Icons.camera_roll_rounded),
-                    Text("Entertainment"),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: () => _setCurrentCategory(3),
-                child: Column(
-                  children: const [
-                    Icon(Icons.tungsten_rounded),
-                    Text("Science"),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: () => _setCurrentCategory(4),
-                child: Column(
-                  children: const [
-                    Icon(Icons.monitor_heart_rounded),
-                    Text("Health"),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: () => _setCurrentCategory(5),
-                child: Column(
-                  children: const [
-                    Icon(Icons.sports_gymnastics_rounded),
-                    Text("Sports"),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: () => _setCurrentCategory(6),
-                child: Column(
-                  children: const [
-                    Icon(Icons.computer_rounded),
-                    Text("Technology"),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        body: FutureBuilder(
-          future: _getPosts(categories[categoryIndex]),
-          builder: (BuildContext ontext, AsyncSnapshot<Map> snapshot) {
-            if (snapshot.hasData) {
-              Map obtainedData = snapshot.data!;
-              List posts = obtainedData['articles'];
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 0),
-                itemCount: posts.length,
-                itemBuilder: (context, index) => NewsCard(
-                  postIndex: index + 1,
-                  providerName: posts[index]['source']['name'],
-                  postTitle: posts[index]['title'],
-                  imageUrl: posts[index]['urlToImage'],
-                  postContent: posts[index]['content'],
-                ),
-              );
-            } else {
-              return const Center(
-                //By default it only be displayed if is always trying getting
-                //the data
-                child: CircularProgressIndicator(),
-              );
-            }
-          },
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*class Post {
-  final String title;
-
-  const Post({required this.title});
-
-  static Post fromJson(json) => Post(title: json['posts']['title']);
-}*/
-
-/*builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return const Center(
-              child: Text("Done"),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(snapshot.error.toString()),
-            );
-          } else {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        },*/
-
-/*
-        import 'dart:async';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-import 'package:news_app/ui/screens/home_page/components/news_card.dart';
-
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    Future<Map> _getPosts() async {
-      final httpResponse = await http.get(
+  ScrollController scrollController = ScrollController();
+  _getPosts(String currentCategory) async {
+    try {
+      final httpResponse = await get(
         Uri.parse(
-            "https://newsapi.org/v2/top-headlines?country=us&apiKey=5185057d777d40a4bce3280e8a4671ce"),
+            "https://newsapi.org/v2/top-headlines?country=us&category=$currentCategory&apiKey=5185057d777d40a4bce3280e8a4671ce"),
       );
-
-      //if (httpResponse.statusCode == 200) {
-      var body = jsonDecode(utf8.decode(httpResponse.bodyBytes));
-      //print(body['articles']);
-      return body;
+      if (httpResponse.statusCode == 200) {
+        pendingLoad = false;
+        return utf8.decode(httpResponse.bodyBytes);
+      } else {
+        pendingLoad = false;
+        return null;
+      }
+    } catch (e) {
+      pendingLoad = false;
+      return e;
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      //appBar: AppBar(),
+      backgroundColor: const Color(0xfff7f7f7),
+      appBar: AppBar(
+        title: const Text(
+          "News App",
+        ),
+        backgroundColor: const Color(0xffffffff),
+        foregroundColor: const Color(0xff303030),
+        elevation: 0,
+      ),
       body: FutureBuilder(
-        future: _getPosts(),
-        builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData) {
-            print(snapshot);
-            Map posts = snapshot.data;
-            return ListView.builder(
-              itemCount: posts['articles'].length,
-              itemBuilder: (context, index) =>
-                  Text(posts['articles'][index]['title']),
+        future: _getPosts(categories[categoryIndex]),
+        builder: (context, snapshot) {
+          if (pendingLoad) {
+            return const Center(
+              //By default it only be displayed if is always trying getting
+              //the data
+              child: CircularProgressIndicator(
+                color: Color(0xff202020),
+              ),
             );
-          }
-          if (snapshot.data.toString().contains("Failed host lookup")) {
+          } else if (snapshot.data.toString().contains("Failed host lookup")) {
             //"Failed host lookup" is the commonly message for a network connection error,
             //Check if the data is an error data type for network connection and show it to
             //users
@@ -280,41 +100,75 @@ class HomePage extends StatelessWidget {
             return Center(
               child: Text(snapshot.error.toString()),
             );
+          } else if (snapshot.hasData) {
+            dynamic data = jsonDecode(snapshot.data.toString())['articles'];
+            return ListView.builder(
+              controller: scrollController,
+              padding: const EdgeInsets.symmetric(vertical: 0),
+              itemCount: data.length,
+              itemBuilder: (context, index) => NewsCard(
+                postIndex: index + 1,
+                providerName: data[index]['source']['name'],
+                postTitle: data[index]['title'],
+                imageUrl: data[index]['urlToImage'],
+                postContent: data[index]['content'],
+              ),
+            );
           } else {
             return const Center(
               //By default it only be displayed if is always trying getting
               //the data
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                color: Color(0xff202020),
+              ),
             );
           }
         },
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        elevation: 8,
+        selectedLabelStyle: TextStyle(
+            fontSize: Theme.of(context).textTheme.labelSmall?.fontSize),
+        unselectedLabelStyle: TextStyle(
+          fontSize: Theme.of(context).textTheme.labelSmall?.fontSize,
+        ),
+        selectedItemColor: const Color(0xff202020),
+        unselectedItemColor: const Color(0xff808080),
+        currentIndex: categoryIndex,
+        showUnselectedLabels: true,
+        onTap: (index) => _setCurrentCategory(index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.newspaper_rounded),
+            label: "General",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.business_center_rounded),
+            label: "Business",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.camera_roll_rounded),
+            label: "Entertainment",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.tungsten_rounded),
+            label: "Science",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.monitor_heart_rounded),
+            label: "Health",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_gymnastics_rounded),
+            label: "Sports",
+          ),
+          BottomNavigationBarItem(
+            backgroundColor: Colors.transparent,
+            icon: Icon(Icons.computer_rounded),
+            label: "Technology",
+          ),
+        ],
+      ),
     );
   }
 }
-
-class Post {
-  final String title;
-
-  const Post({required this.title});
-
-  static Post fromJson(json) => Post(title: json['posts']['title']);
-}
-
-
-/*builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return const Center(
-              child: Text("Done"),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(snapshot.error.toString()),
-            );
-          } else {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-        },*/
-        */
